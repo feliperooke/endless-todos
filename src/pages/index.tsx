@@ -2,7 +2,7 @@ import Head from "next/head";
 import { useEffect } from "react";
 import Item from "~/components/Item";
 import NewItem from "~/components/NewItem";
-import useTodo from "~/hooks/useTodo";
+import useTodo, { TodoItem } from "~/hooks/useTodo";
 // import { api } from "~/utils/api";
 
 export default function Home() {
@@ -16,11 +16,33 @@ export default function Home() {
     addItem,
     changeDoneItem,
     changeTodoItem,
+    addlevelTodoItem,
   } = useTodo();
 
   useEffect(() => {
     document.body.className = "bg-charcoal-700";
   });
+
+  const renderItems = (
+    items: TodoItem[],
+  ) => {
+    return items.map(({ id, value, children }, index) => (
+        <>
+        <Item
+          key={id}
+          onChange={(newValue) => changeTodoItem(id, newValue)}
+          onChangeStatus={() => complete(id)}
+          initialValue={value}
+          addLevelTodoItem={() => addlevelTodoItem(id, items[index - 1]?.id ?? undefined)} 
+          />
+        {children?.length > 0 && (
+          <div style={{ paddingLeft: 16 }}>
+            {renderItems(children)}
+          </div>
+        )}
+        </>
+    ));
+  };
 
   return (
     <>
@@ -38,21 +60,15 @@ export default function Home() {
         <main className="mx-auto max-w-md justify-center px-2 pt-32 text-white">
           <div className="flex flex-col gap-2 md:w-[26.5rem]">
             <NewItem onSubmit={addItem} />
-            {todo.map(({ id, value }) => (
-              <Item
-                key={id}
-                onChange={(newValue) => changeTodoItem(id, newValue)}
-                onChangeStatus={() => complete(id)}
-                initialValue={value}
-              />
-            ))}
-            {done.map(({ id, value }) => (
+            {renderItems(todo)}
+            {done.map(({ id, value }, index) => (
               <Item
                 key={id}
                 done
                 onChange={(newValue) => changeDoneItem(id, newValue)}
                 onChangeStatus={() => markAsTodo(id)}
                 initialValue={value}
+                addLevelTodoItem={() => addlevelTodoItem(id, todo[index - 1]?.id)} 
               />
             ))}
           </div>

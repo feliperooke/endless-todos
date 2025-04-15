@@ -13,13 +13,24 @@ interface Props {
   onChangeStatus: () => void;
   onChange: (value: string) => void;
   initialValue: string;
+  addLevelTodoItem:() => void;
 }
 
-const Item: FC<Props> = ({ done, onChangeStatus, onChange, initialValue }) => {
+const Item: FC<Props> = ({ done, onChangeStatus, onChange, initialValue, addLevelTodoItem }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState(initialValue);
   const handleChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     setValue(e.target.value);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Tab') {
+      // setValue('OKOKOK');
+      addLevelTodoItem();
+      debugger;
+      // event.preventDefault();
+      console.log('ket TAB')
+    }
   };
 
   const handleSubmit: FormEventHandler = (e) => {
@@ -41,6 +52,7 @@ const Item: FC<Props> = ({ done, onChangeStatus, onChange, initialValue }) => {
           done={done}
           onChange={handleChange}
           onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
         />
       </form>
     </div>
@@ -48,3 +60,7 @@ const Item: FC<Props> = ({ done, onChangeStatus, onChange, initialValue }) => {
 };
 
 export default Item;
+function onAddLevelTodoItem(value: string, parentId: number | undefined) {
+  throw new Error("Function not implemented.");
+}
+

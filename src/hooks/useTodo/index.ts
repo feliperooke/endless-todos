@@ -1,12 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 
 const TODO_KEY = "@endless-todo/todo";
 const DONE_KEY = "@endless-todo/done";
 const LAST_ID_KEY = "@endless-todo/last-id";
 
-interface TodoItem {
+export interface TodoItem {
   id: number;
   value: string;
+  children: TodoItem[];
 }
 
 const sortById = (a: TodoItem, b: TodoItem) => b.id - a.id;
@@ -69,13 +72,57 @@ const useTodo = () => {
     changeItem(TODO_KEY, id, value);
   };
 
+  const findRecursively = (list: TodoItem[], id: number): TodoItem | null => {
+    for (const item of list) {
+      if (item?.id === id) {
+        return item;
+      }
+      if (item?.children?.length) {
+        const found: TodoItem | null = findRecursively(item.children, id);
+        if (found) {
+          return found;
+        }
+      }
+    }
+    return null;
+  };
+
+  const removeRecursivelyById = (list: TodoItem[], id: number): TodoItem[] => {
+    const removeChildren = (item: TodoItem): TodoItem => {
+      if (item.children) {
+        item.children = item.children.map(removeChildren).filter(child => child.id !== id);
+      }
+      return item;
+    };
+    return list.map(removeChildren).filter(item => item.id !== id);
+  }
+
+
+  const addlevelTodoItem = (id: number, parentId?: number) => {
+    if (!parentId) return;
+    
+    const child = { ... findRecursively(todoList, id)} as TodoItem;
+
+    const deepCopyTodoListWithoutChild = removeRecursivelyById(todoList, child.id);
+    const father = findRecursively(deepCopyTodoListWithoutChild, parentId);
+    
+    if (!father) return;
+
+    if (!father.children) {
+      father.children = [];
+    }
+    father.children.push(child);
+
+    setTodoList(deepCopyTodoListWithoutChild);
+  };
+
   const changeDoneItem = (id: number, value: string) => {
     changeItem(DONE_KEY, id, value);
   };
 
   const addItem = (value: string) => {
     const id = parseInt(localStorage.getItem(LAST_ID_KEY) ?? "0", 10) + 1;
-    setTodoList((currentList) => [{ id, value }, ...currentList]);
+    setTodoList((currentList) => [{ id, value, children:[] }, ...currentList]);
     localStorage.setItem(LAST_ID_KEY, `${id}`);
   };
 
@@ -110,6 +157,7 @@ const useTodo = () => {
     addItem,
     changeDoneItem,
     changeTodoItem,
+    addlevelTodoItem,
   };
 };
 
